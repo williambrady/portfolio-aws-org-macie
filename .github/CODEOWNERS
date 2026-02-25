@@ -1,0 +1,15 @@
+# CODEOWNERS - Define code ownership for pull request reviews
+# https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
+
+# Default owners for everything in the repo
+* @your-username
+
+# Infrastructure code
+/terraform/ @your-username
+/cloudformation/ @your-username
+
+# CI/CD workflows
+/.github/ @your-username
+
+# Documentation
+*.md @your-username

@@ -1,0 +1,45 @@
+name: Lint
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+jobs:
+  pre-commit:
+    name: Pre-commit Checks
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: '1.7.0'
+
+      - name: Install TFLint
+        uses: terraform-linters/setup-tflint@v4
+        with:
+          tflint_version: latest
+
+      - name: Install terraform-docs
+        run: |
+          curl -sSLo ./terraform-docs.tar.gz https://terraform-docs.io/dl/v0.18.0/terraform-docs-v0.18.0-$(uname)-amd64.tar.gz
+          tar -xzf terraform-docs.tar.gz
+          chmod +x terraform-docs
+          sudo mv terraform-docs /usr/local/bin/
+
+      - name: Initialize TFLint plugins
+        run: tflint --init
+        working-directory: terraform
+
+      - name: Run pre-commit
+        uses: pre-commit/action@v3.0.1

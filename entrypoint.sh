@@ -253,6 +253,16 @@ if [ "$TF_ACTION" = "plan" ]; then
     echo -e "${YELLOW}Verifying Macie organization configuration...${NC}"
     python3 /work/post-deployment/verify-macie.py --dry-run 2>&1 | tee_log "verify" || true
     echo ""
+
+    # Enroll existing member accounts (dry-run preview)
+    AUDIT_ACCOUNT_ID=$(jq -r '.audit_account_id // empty' /work/terraform/bootstrap.auto.tfvars.json 2>/dev/null)
+    if [ -n "$AUDIT_ACCOUNT_ID" ]; then
+        echo -e "${YELLOW}Checking Macie member enrollment...${NC}"
+        python3 /work/post-deployment/enroll-macie-members.py \
+            --audit-account-id "$AUDIT_ACCOUNT_ID" \
+            --region "${PRIMARY_REGION}" 2>&1 | tee_log "enroll-members" || true
+        echo ""
+    fi
 fi
 
 if [ "$TF_ACTION" = "apply -auto-approve" ]; then
@@ -272,6 +282,19 @@ if [ "$TF_ACTION" = "apply -auto-approve" ]; then
         echo -e "${YELLOW}Warning: Macie verification encountered issues (exit code: $MACIE_EXIT_CODE)${NC}"
     fi
     echo ""
+
+    # Enroll existing member accounts
+    AUDIT_ACCOUNT_ID=$(jq -r '.audit_account_id // empty' /work/terraform/bootstrap.auto.tfvars.json 2>/dev/null)
+    if [ -n "$AUDIT_ACCOUNT_ID" ]; then
+        echo -e "${YELLOW}Enrolling existing member accounts in Macie...${NC}"
+        python3 /work/post-deployment/enroll-macie-members.py \
+            --audit-account-id "$AUDIT_ACCOUNT_ID" \
+            --region "${PRIMARY_REGION}" \
+            --apply 2>&1 | tee_log "enroll-members" || true
+        echo ""
+    else
+        echo -e "${YELLOW}Skipping member enrollment (audit account ID not found)${NC}"
+    fi
 fi
 
 # Phase 5: Summary

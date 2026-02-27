@@ -53,22 +53,24 @@ This document describes every step that occurs during a `make apply` deployment,
 - Path: `/{resource_prefix}/org-baseline/config`
 - Written by `portfolio-aws-org-baseline` during its deployment
 - Contains JSON with: `audit_account_id`, `primary_region`, `organization_id`, `tags`
-- **If SSM parameter exists:** Values override config.yaml defaults
+- **If SSM parameter exists:** Provides default values for `audit_account_id`, `primary_region`, and `tags`
 - **If SSM parameter missing:** Falls back to config.yaml values
 
 ### 1.4 Merge Configuration
 
-Priority order (highest wins):
-1. `config.yaml` explicit overrides (e.g., `audit_account_id` if set)
+Priority order for scalar values (`audit_account_id`, `primary_region`):
+1. `config.yaml` explicit overrides (highest priority)
 2. SSM parameter values
 3. Hardcoded defaults (`primary_region` defaults to `us-east-1`)
 
+Note: `tags`/`custom_tags` are a special case. When the SSM parameter includes a `tags` field, those tags are used even if `config.yaml` also defines `tags`. If SSM has no `tags` field, `config.yaml` `tags` are used.
+
 Resolved values:
-- `primary_region` - from config.yaml or SSM
-- `audit_account_id` - from config.yaml or SSM (required)
-- `custom_tags` - from SSM `tags` field, or config.yaml `tags`
-- `bucket_exclusion_tag_value` - from config.yaml (default: `true`)
-- `audit_account_role` - from config.yaml (default: `OrganizationAccountAccessRole`)
+- `primary_region` - config.yaml override > SSM > default `us-east-1`
+- `audit_account_id` - config.yaml override > SSM (required)
+- `custom_tags` - from SSM `tags` field when present; otherwise from config.yaml `tags`
+- `bucket_exclusion_tag_value` - from config.yaml only (default: `true`)
+- `audit_account_role` - from config.yaml only (default: `OrganizationAccountAccessRole`)
 
 ### 1.5 Discover Macie Organization State
 

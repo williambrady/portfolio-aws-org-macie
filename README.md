@@ -6,8 +6,6 @@ Deploy Macie organization-wide in the primary AWS region with discovery-driven T
 
 portfolio-aws-org-macie configures AWS Macie in the primary region of an AWS Organization. It designates a delegated administrator (audit account), enables organization-wide auto-enrollment, exports findings to S3 with KMS encryption, enables automated sensitive data discovery, and runs a weekly classification job with tag-based bucket exclusions.
 
-This project was extracted from [portfolio-aws-org-baseline](../portfolio-aws-org-baseline) for independent deployment and iteration.
-
 ## Features
 
 - **Delegated Admin** - Configures audit account as Macie delegated administrator
@@ -37,7 +35,7 @@ resource_prefix: "myorg"  # Must match org-baseline's resource_prefix
 deployment_name: "portfolio-aws-org-macie"
 ```
 
-The `audit_account_id`, `primary_region`, and `tags` are auto-discovered from `portfolio-aws-org-baseline` via an SSM Parameter Store parameter at `/{resource_prefix}/org-baseline/config`. You can override any value in `config.yaml` if needed.
+The `audit_account_id`, `primary_region`, and `tags` are auto-discovered from `portfolio-aws-org-baseline` via an SSM Parameter Store parameter at `/{resource_prefix}/org-baseline/config`. You can override `audit_account_id` and `primary_region` in `config.yaml` if needed. When SSM provides `tags`, those take precedence over any `tags` defined in `config.yaml`.
 
 ### 2. Plan
 
@@ -99,15 +97,14 @@ bucket_exclusion_tag_value: "true"
 
 ### SSM Auto-Discovery
 
-When `portfolio-aws-org-baseline` is deployed, it writes organization configuration to SSM Parameter Store at `/{resource_prefix}/org-baseline/config`. This project reads that parameter during discovery to obtain:
+When `portfolio-aws-org-baseline` is deployed, it writes organization configuration to SSM Parameter Store at `/{resource_prefix}/org-baseline/config`. Discovery combines the SSM parameter with AWS API calls to resolve:
 
-- `audit_account_id` - Delegated admin account
-- `primary_region` - Primary AWS region
-- `management_account_id` - Management account
-- `organization_id` - AWS Organization ID
-- `tags` - Shared resource tags
+- `audit_account_id` - Delegated admin account (from SSM)
+- `primary_region` - Primary AWS region (from SSM)
+- `management_account_id` - Management account (from `sts.get_caller_identity()`)
+- `tags` - Shared resource tags (from SSM, takes precedence over config.yaml)
 
-If the SSM parameter is unavailable (e.g., first-time setup), discovery falls back to values in `config.yaml`.
+If the SSM parameter is unavailable (e.g., first-time setup), discovery falls back to values in `config.yaml` where possible.
 
 ### Bucket Exclusions
 
@@ -193,7 +190,7 @@ Delegating admin to the audit account auto-enables Macie there (AWS behavior). S
 
 ## State Management
 
-- Terraform state stored in the org-baseline S3 bucket: `{resource_prefix}-tfstate-{account_id}`
+- Terraform state stored in the org-baseline S3 bucket: `{resource_prefix}-tfstate-{ACCOUNT_ID}`
 - State key: `macie/terraform.tfstate` (separate prefix from org-baseline's `organization/terraform.tfstate`)
 - The state bucket must be created by `portfolio-aws-org-baseline` before running this project
 

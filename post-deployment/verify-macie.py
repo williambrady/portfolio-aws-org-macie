@@ -36,16 +36,24 @@ from botocore.exceptions import ClientError
 
 
 def load_tfvars() -> dict:
-    """Load bootstrap.auto.tfvars.json for account IDs."""
+    """Load config from discovery.json and bootstrap.auto.tfvars.json."""
+    result = {}
+
     tfvars_path = Path("/work/terraform/bootstrap.auto.tfvars.json")
     if not tfvars_path.exists():
         tfvars_path = Path(__file__).parent.parent / "terraform" / "bootstrap.auto.tfvars.json"
+    if tfvars_path.exists():
+        with open(tfvars_path) as f:
+            result.update(json.load(f))
 
-    if not tfvars_path.exists():
-        return {}
+    discovery_path = Path("/work/terraform/discovery.json")
+    if not discovery_path.exists():
+        discovery_path = Path(__file__).parent.parent / "terraform" / "discovery.json"
+    if discovery_path.exists():
+        with open(discovery_path) as f:
+            result.update(json.load(f))
 
-    with open(tfvars_path) as f:
-        return json.load(f)
+    return result
 
 
 def assume_role(account_id: str, region: str) -> boto3.Session | None:

@@ -80,15 +80,23 @@ def import_resource(address: str, resource_id: str, dry_run: bool = False) -> bo
 
 
 def get_account_ids_from_tfvars() -> dict:
-    """Get account IDs from bootstrap.auto.tfvars.json."""
-    tfvars_path = Path("/work/terraform/bootstrap.auto.tfvars.json")
+    """Get account IDs from discovery.json and bootstrap.auto.tfvars.json."""
     result = {"management": "", "audit": ""}
 
+    discovery_path = Path("/work/terraform/discovery.json")
+    if discovery_path.exists():
+        try:
+            with open(discovery_path) as f:
+                discovery = json.load(f)
+            result["management"] = discovery.get("management_account_id", "")
+        except Exception:
+            pass
+
+    tfvars_path = Path("/work/terraform/bootstrap.auto.tfvars.json")
     if tfvars_path.exists():
         try:
             with open(tfvars_path) as f:
                 tfvars = json.load(f)
-            result["management"] = tfvars.get("management_account_id", "")
             result["audit"] = tfvars.get("audit_account_id", "")
         except Exception:
             pass

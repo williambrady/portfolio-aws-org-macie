@@ -2,14 +2,13 @@
 # https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
 
 # Default owners for everything in the repo
-* @your-username
+* @williambrady @ghaworkflow
 
 # Infrastructure code
-/terraform/ @your-username
-/cloudformation/ @your-username
+/terraform/ @williambrady @ghaworkflow
 
 # CI/CD workflows
-/.github/ @your-username
+/.github/ @williambrady @ghaworkflow
 
 # Documentation
-*.md @your-username
+*.md @williambrady @ghaworkflow

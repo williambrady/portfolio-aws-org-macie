@@ -1,0 +1,25 @@
+# Macie Organization Configuration
+# This project deploys Macie across the primary region in an AWS Organization.
+# It assumes the AWS Organization and delegated admin service principals
+# are already configured by portfolio-aws-org-baseline.
+
+# REQUIRED: Prefix for all AWS resource names (S3 state bucket, etc.)
+# Also used to locate the org-baseline SSM parameter at /{resource_prefix}/org-baseline/config
+resource_prefix: "ccoe"
+
+# Deployment name (used for CloudWatch log group naming)
+deployment_name: "portfolio-aws-org-macie"
+
+# Cross-account role name (default: OrganizationAccountAccessRole)
+audit_account_role: "OrganizationAccountAccessRole"
+
+# Bucket exclusion from the weekly classification job.
+# Tag key is derived from resource_prefix: {resource_prefix}_macie_exclude
+# Any S3 bucket with this tag key/value will be excluded from scanning.
+# Tag infrastructure buckets in other portfolio projects (org-baseline,
+# org-guardduty, etc.) with this tag to exclude them.
+bucket_exclusion_tag_value: "true"
+
+# Optional overrides (auto-discovered from org-baseline SSM parameter if omitted)
+# primary_region: "us-east-1"
+# audit_account_id: ""

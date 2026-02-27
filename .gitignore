@@ -87,6 +87,10 @@ credentials.json
 secrets.yaml
 secrets.yml
 
+# Generated discovery/terraform files
+terraform/bootstrap.auto.tfvars.json
+terraform/discovery.json
+
 # Logs
 *.log
 logs/
@@ -94,3 +98,6 @@ logs/
 # Build artifacts
 *.zip
 *.tar.gz
+
+# Ruff
+.ruff_cache/

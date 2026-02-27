@@ -1,17 +1,52 @@
-variable "aws_region" {
-  description = "AWS region for resources"
+# Variables for Macie Organization Deployment
+
+variable "primary_region" {
+  description = "Primary AWS region for Macie deployment"
   type        = string
-  default     = "us-east-1"
 }
 
-variable "project_name" {
-  description = "Name of the project (used for tagging)"
+variable "resource_prefix" {
+  description = "Prefix for all AWS resource names"
   type        = string
-  default     = "my-project"
 }
 
-variable "environment" {
-  description = "Environment name (e.g., dev, staging, prod)"
+variable "deployment_name" {
+  description = "Deployment name used for CloudWatch log group naming"
   type        = string
-  default     = "dev"
+}
+
+variable "audit_account_id" {
+  description = "AWS account ID of the audit account (delegated administrator for Macie)"
+  type        = string
+  default     = ""
+}
+
+variable "audit_account_role" {
+  description = "IAM role name for cross-account access to the audit account"
+  type        = string
+  default     = "OrganizationAccountAccessRole"
+}
+
+variable "management_account_id" {
+  description = "AWS account ID of the management account (auto-discovered from caller identity)"
+  type        = string
+  default     = ""
+}
+
+variable "access_logs_bucket_exists" {
+  description = "Whether the access logs bucket exists in the audit account (auto-discovered)"
+  type        = bool
+  default     = false
+}
+
+variable "bucket_exclusion_tag_value" {
+  description = "Tag value for bucket exclusions from the classification job (key is {resource_prefix}_macie_exclude)"
+  type        = string
+  default     = "true"
+}
+
+variable "custom_tags" {
+  description = "Custom tags applied to all resources (auto-discovered from org-baseline SSM parameter)"
+  type        = map(string)
+  default     = {}
 }

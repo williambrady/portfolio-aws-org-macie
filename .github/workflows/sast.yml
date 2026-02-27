@@ -1,55 +1,37 @@
-name: SAST Security Scan
+name: SAST
 
 on:
   push:
     branches: [main, develop]
   pull_request:
     branches: [main, develop]
-  schedule:
-    # Run daily at 2 AM UTC
-    - cron: '0 2 * * *'
-  workflow_dispatch:
 
 permissions:
   contents: read
   security-events: write
-  actions: read
-  pull-requests: write
 
 jobs:
   security-scan:
     name: Security Scan
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout repository
+      - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Run SDLC Code Scanner
+      - name: Run portfolio-code-scanner
         id: security-scan
         uses: williambrady/portfolio-code-scanner@v1
         with:
           scan-path: '.'
-          output-formats: 'json,html,markdown,sarif'
+          output-formats: 'json,sarif'
           fail-on-severity: 'HIGH'
-          verbose: 'false'
 
-      - name: Upload SARIF to GitHub Code Scanning
-        uses: github/codeql-action/upload-sarif@v3
-        if: always() && steps.security-scan.outputs.sarif-path != '' && steps.security-scan.outputs.findings-count != '0'
+      - name: Upload SARIF results
+        uses: github/codeql-action/upload-sarif@v4
+        if: always() && steps.security-scan.outputs.sarif-path != ''
         with:
           sarif_file: ${{ steps.security-scan.outputs.sarif-path }}
-          category: 'sdlc-code-scanner'
-
-      - name: Upload Scan Reports
-        uses: actions/upload-artifact@v4
-        if: always() && steps.security-scan.outputs.report-path != ''
-        with:
-          name: security-scan-reports
-          path: ${{ steps.security-scan.outputs.report-path }}
-          include-hidden-files: true
-          if-no-files-found: warn
-          retention-days: 30
+        continue-on-error: true
 
       - name: Post Scan Summary
         if: always()
@@ -63,3 +45,28 @@ jobs:
           echo "| Medium | ${{ steps.security-scan.outputs.medium-count }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Low | ${{ steps.security-scan.outputs.low-count }} |" >> $GITHUB_STEP_SUMMARY
           echo "| **Total** | **${{ steps.security-scan.outputs.findings-count }}** |" >> $GITHUB_STEP_SUMMARY
+
+  trivy:
+    name: Container Scan
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build container image
+        run: docker build -t portfolio-aws-org-macie:scan .
+
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: 'portfolio-aws-org-macie:scan'
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+          severity: 'CRITICAL,HIGH'
+
+      - name: Upload Trivy scan results
+        uses: github/codeql-action/upload-sarif@v4
+        if: always()
+        with:
+          sarif_file: 'trivy-results.sarif'
+        continue-on-error: true

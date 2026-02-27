@@ -1,52 +1,64 @@
-.PHONY: help init plan apply destroy fmt validate lint test clean
+.PHONY: build discover plan apply destroy shell clean help
+
+IMAGE_NAME := portfolio-aws-org-macie
+IMAGE_TAG := dev
+
+DOCKER_ENV := -e AWS_PROFILE=$(AWS_PROFILE)
 
 # Default target
 help:
 	@echo "Available targets:"
-	@echo "  init      - Initialize Terraform"
-	@echo "  plan      - Run Terraform plan"
-	@echo "  apply     - Apply Terraform changes"
-	@echo "  destroy   - Destroy Terraform resources"
-	@echo "  fmt       - Format Terraform and Python code"
-	@echo "  validate  - Validate Terraform configuration"
-	@echo "  lint      - Run linters"
-	@echo "  test      - Run tests"
-	@echo "  clean     - Clean generated files"
-	@echo "  pre-commit- Run pre-commit hooks"
+	@echo "  build     - Build the Docker image"
+	@echo "  discover  - Run discovery only"
+	@echo "  plan      - Run discovery + Terraform plan"
+	@echo "  apply     - Full deployment (discovery + apply + post-deployment)"
+	@echo "  destroy   - Tear down all managed resources"
+	@echo "  shell     - Open shell in container"
+	@echo "  clean     - Remove Docker image"
+	@echo ""
+	@echo "Environment variables:"
+	@echo "  AWS_PROFILE    - AWS profile to use (required)"
 
-# Terraform targets
-init:
-	cd terraform && terraform init
+# Build the Docker image
+build:
+	docker build -t $(IMAGE_NAME):$(IMAGE_TAG) .
 
-plan:
-	cd terraform && terraform plan
+# Run discovery only
+discover: build
+	docker run --rm \
+		-v "$(HOME)/.aws:/home/macie/.aws:ro" \
+		$(DOCKER_ENV) \
+		$(IMAGE_NAME):$(IMAGE_TAG) discover
 
-apply:
-	cd terraform && terraform apply
+# Run plan (discovery + Terraform plan)
+plan: build
+	docker run --rm \
+		-v "$(HOME)/.aws:/home/macie/.aws:ro" \
+		$(DOCKER_ENV) \
+		$(IMAGE_NAME):$(IMAGE_TAG) plan
 
-destroy:
-	cd terraform && terraform destroy
+# Full deployment
+apply: build
+	docker run --rm \
+		-v "$(HOME)/.aws:/home/macie/.aws:ro" \
+		$(DOCKER_ENV) \
+		$(IMAGE_NAME):$(IMAGE_TAG) apply
 
-fmt:
-	terraform fmt -recursive terraform/
-	@if command -v black >/dev/null 2>&1; then black scripts/; fi
+# Tear down resources
+destroy: build
+	docker run --rm \
+		-v "$(HOME)/.aws:/home/macie/.aws:ro" \
+		$(DOCKER_ENV) \
+		$(IMAGE_NAME):$(IMAGE_TAG) destroy
 
-validate:
-	cd terraform && terraform validate
+# Open interactive shell in container
+shell: build
+	docker run --rm -it \
+		-v "$(HOME)/.aws:/home/macie/.aws:ro" \
+		$(DOCKER_ENV) \
+		--entrypoint /bin/bash \
+		$(IMAGE_NAME):$(IMAGE_TAG)
 
-lint:
-	@if command -v tflint >/dev/null 2>&1; then cd terraform && tflint; fi
-	@if command -v flake8 >/dev/null 2>&1; then flake8 scripts/; fi
-	@if command -v pylint >/dev/null 2>&1; then pylint scripts/; fi
-
-test:
-	@if command -v pytest >/dev/null 2>&1; then pytest tests/; fi
-
+# Clean up Docker image
 clean:
-	find . -type d -name "__pycache__" -exec rm -rf {} + 2>/dev/null || true
-	find . -type f -name "*.pyc" -delete 2>/dev/null || true
-	find . -type d -name ".pytest_cache" -exec rm -rf {} + 2>/dev/null || true
-	find . -type d -name "*.egg-info" -exec rm -rf {} + 2>/dev/null || true
-
-pre-commit:
-	pre-commit run --all-files
+	docker rmi $(IMAGE_NAME):$(IMAGE_TAG) 2>/dev/null || true

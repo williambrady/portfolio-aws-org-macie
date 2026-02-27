@@ -15,6 +15,9 @@ terraform {
 # -----------------------------------------------------------------------------
 
 resource "aws_s3_bucket" "main" {
+  #checkov:skip=CKV_AWS_18:Access logging is configured separately via aws_s3_bucket_logging
+  #checkov:skip=CKV2_AWS_62:Event notifications are not required for Macie findings storage
+  #checkov:skip=CKV_AWS_144:Cross-region replication is not required; findings are regional and reproducible
   bucket = var.bucket_name
 
   tags = merge(var.common_tags, {
@@ -191,6 +194,7 @@ resource "aws_s3_bucket_lifecycle_configuration" "main" {
 # -----------------------------------------------------------------------------
 
 resource "aws_s3_bucket_ownership_controls" "main" {
+  #checkov:skip=CKV2_AWS_65:BucketOwnerPreferred is required for S3 access logging target buckets
   count = var.is_access_logging_bucket ? 1 : 0
 
   bucket = aws_s3_bucket.main.id

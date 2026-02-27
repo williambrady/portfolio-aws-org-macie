@@ -98,7 +98,7 @@ def get_account_ids_from_tfvars() -> dict:
 
 def get_cross_account_session(account_id: str, region: str):
     """Get boto3 session for cross-account access via OrganizationAccountAccessRole."""
-    sts = boto3.client("sts")
+    sts = boto3.client("sts", region_name=region)
     try:
         response = sts.assume_role(
             RoleArn=f"arn:aws:iam::{account_id}:role/OrganizationAccountAccessRole",
@@ -174,7 +174,7 @@ def sync_cloudwatch_log_group(state_resources: set, dry_run: bool = False):
         print("    Import failed (will be retried on next run)")
 
 
-def sync_macie_management_account(state_resources: set, dry_run: bool = False):
+def sync_macie_management_account(state_resources: set, primary_region: str, dry_run: bool = False):
     """Sync Macie management account enablement into Terraform state."""
     print("\n=== Syncing Macie Management Account ===\n")
 
@@ -186,7 +186,7 @@ def sync_macie_management_account(state_resources: set, dry_run: bool = False):
 
     # Check if Macie is enabled in the management account
     try:
-        macie_client = boto3.client("macie2")
+        macie_client = boto3.client("macie2", region_name=primary_region)
         session = macie_client.get_macie_session()
         if session.get("status") == "ENABLED":
             print(f"  Importing {tf_address}...")
@@ -204,7 +204,7 @@ def sync_macie_management_account(state_resources: set, dry_run: bool = False):
             print(f"  Error checking Macie status: {e}")
 
 
-def sync_macie_org_admin(state_resources: set, dry_run: bool = False):
+def sync_macie_org_admin(state_resources: set, primary_region: str, dry_run: bool = False):
     """Sync Macie delegated administrator into Terraform state."""
     print("\n=== Syncing Macie Delegated Admin ===\n")
 
@@ -222,7 +222,7 @@ def sync_macie_org_admin(state_resources: set, dry_run: bool = False):
         return
 
     try:
-        org_client = boto3.client("organizations")
+        org_client = boto3.client("organizations", region_name=primary_region)
         response = org_client.list_delegated_administrators(ServicePrincipal="macie.amazonaws.com")
         admins = response.get("DelegatedAdministrators", [])
         is_delegated_admin = any(a["Id"] == audit_account_id for a in admins)
@@ -326,10 +326,10 @@ def main():
     sync_cloudwatch_log_group(state_resources, dry_run=dry_run)
 
     # Sync Macie management account enablement
-    sync_macie_management_account(state_resources, dry_run=dry_run)
+    sync_macie_management_account(state_resources, primary_region, dry_run=dry_run)
 
     # Sync Macie delegated admin
-    sync_macie_org_admin(state_resources, dry_run=dry_run)
+    sync_macie_org_admin(state_resources, primary_region, dry_run=dry_run)
 
     # Sync Macie audit account enablement
     sync_macie_audit_account(state_resources, primary_region, dry_run=dry_run)

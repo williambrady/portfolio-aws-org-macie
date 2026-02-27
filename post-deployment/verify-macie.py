@@ -24,6 +24,8 @@ Usage:
     python3 verify-macie.py --dry-run    # Verify only, do not enable anything
 """
 
+from __future__ import annotations
+
 import argparse
 import json
 import sys
@@ -46,7 +48,7 @@ def load_tfvars() -> dict:
         return json.load(f)
 
 
-def assume_role(account_id: str, region: str) -> boto3.Session:
+def assume_role(account_id: str, region: str) -> boto3.Session | None:
     """Assume OrganizationAccountAccessRole in target account."""
     sts_client = boto3.client("sts", region_name=region)
     role_arn = f"arn:aws:iam::{account_id}:role/OrganizationAccountAccessRole"

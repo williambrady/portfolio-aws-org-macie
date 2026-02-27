@@ -75,10 +75,6 @@ resource "aws_cloudwatch_log_group" "deployments" {
   kms_key_id        = module.kms_deployment_logs.key_arn
 
   tags = local.common_tags
-
-  lifecycle {
-    prevent_destroy = true
-  }
 }
 
 # -----------------------------------------------------------------------------

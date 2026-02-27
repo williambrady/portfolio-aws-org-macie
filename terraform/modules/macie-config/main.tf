@@ -26,12 +26,6 @@ terraform {
 }
 
 # -----------------------------------------------------------------------------
-# Data Sources
-# -----------------------------------------------------------------------------
-
-data "aws_caller_identity" "current" {}
-
-# -----------------------------------------------------------------------------
 # Enable Macie in the Audit Account
 # -----------------------------------------------------------------------------
 
@@ -91,15 +85,6 @@ resource "aws_macie2_classification_job" "ccoe_weekly" {
 
   s3_job_definition {
     bucket_criteria {
-      includes {
-        and {
-          simple_criterion {
-            comparator = "EQ"
-            key        = "ACCOUNT_ID"
-            values     = [data.aws_caller_identity.current.account_id]
-          }
-        }
-      }
       excludes {
         and {
           tag_criterion {

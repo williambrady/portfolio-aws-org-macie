@@ -27,12 +27,6 @@ variable "audit_account_role" {
   default     = "OrganizationAccountAccessRole"
 }
 
-variable "management_account_id" {
-  description = "AWS account ID of the management account (auto-discovered from caller identity)"
-  type        = string
-  default     = ""
-}
-
 variable "access_logs_bucket_exists" {
   description = "Whether the access logs bucket exists in the audit account (auto-discovered)"
   type        = bool

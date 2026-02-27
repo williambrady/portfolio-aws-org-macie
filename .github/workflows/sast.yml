@@ -57,7 +57,7 @@ jobs:
         run: docker build -t portfolio-aws-org-macie:scan .
 
       - name: Run Trivy vulnerability scanner
-        uses: aquasecurity/trivy-action@master
+        uses: aquasecurity/trivy-action@0.28.0
         with:
           image-ref: 'portfolio-aws-org-macie:scan'
           format: 'sarif'

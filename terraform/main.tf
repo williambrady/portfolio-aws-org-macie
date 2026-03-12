@@ -117,8 +117,9 @@ module "s3_macie_findings" {
   bucket_name = "${var.resource_prefix}-macie-findings-${var.audit_account_id}"
   kms_key_arn = module.kms_macie_findings[0].key_arn
 
-  access_logging_enabled = var.access_logs_bucket_exists
-  access_logging_bucket  = "${var.resource_prefix}-s3-access-logs-${var.audit_account_id}"
+  bucket_exclusion_tag_key = "${var.resource_prefix}_macie_exclude"
+  access_logging_enabled   = var.access_logs_bucket_exists
+  access_logging_bucket    = "${var.resource_prefix}-s3-access-logs-${var.audit_account_id}"
 
   bucket_policy = jsonencode({
     Version = "2012-10-17"

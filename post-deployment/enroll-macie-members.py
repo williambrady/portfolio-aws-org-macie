@@ -89,21 +89,22 @@ def get_macie_members(session: boto3.Session, region: str) -> dict[str, str]:
     """Get accounts already associated with Macie and their relationship status.
 
     Returns a dict mapping account_id to relationshipStatus.
-    Uses onlyAssociated='false' to include all accounts (not just active members).
+    Uses onlyAssociated=False to include all accounts (not just active members).
     """
     macie_client = session.client("macie2", region_name=region)
     members = {}
 
     try:
         paginator = macie_client.get_paginator("list_members")
-        for page in paginator.paginate(onlyAssociated="false"):
+        for page in paginator.paginate(onlyAssociated=False):
             for member in page.get("members", []):
                 members[member["accountId"]] = member.get("relationshipStatus", "Unknown")
     except ClientError as e:
         if "not enabled" in str(e).lower():
-            print(f"  ERROR: Macie is not enabled in {region}")
+            print(f"  ERROR: Macie is not enabled in {region}", file=sys.stderr)
             sys.exit(1)
-        print(f"  Warning: Error listing Macie members in {region}: {e}")
+        print(f"  ERROR: Failed to list Macie members in {region}: {e}", file=sys.stderr)
+        sys.exit(1)
 
     return members
 

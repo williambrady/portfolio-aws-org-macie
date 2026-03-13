@@ -96,7 +96,7 @@ def get_macie_members(session: boto3.Session, region: str) -> dict[str, str]:
 
     try:
         paginator = macie_client.get_paginator("list_members")
-        for page in paginator.paginate(onlyAssociated=False):
+        for page in paginator.paginate(onlyAssociated="false"):
             for member in page.get("members", []):
                 members[member["accountId"]] = member.get("relationshipStatus", "Unknown")
     except ClientError as e:

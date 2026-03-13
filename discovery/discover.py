@@ -194,7 +194,9 @@ def main():
     print("")
 
     # Discover Macie organization configuration
-    discovery = {}
+    discovery = {
+        "management_account_id": management_account_id,
+    }
 
     print("Macie Organization:")
     if not audit_account_id:
@@ -251,7 +253,6 @@ def main():
         "primary_region": primary_region,
         "resource_prefix": resource_prefix,
         "deployment_name": deployment_name,
-        "management_account_id": management_account_id,
         "audit_account_id": audit_account_id,
         "audit_account_role": audit_account_role,
         "access_logs_bucket_exists": access_logs_bucket_exists,

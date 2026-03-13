@@ -11,7 +11,7 @@ output "auto_enable" {
 }
 
 output "classification_job_id" {
-  description = "The ID of the ccoe-weekly classification job"
+  description = "The ID of the ccoe-weekly classification job (name includes config hash)"
   value       = aws_macie2_classification_job.ccoe_weekly.id
 }
 

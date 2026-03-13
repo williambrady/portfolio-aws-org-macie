@@ -36,16 +36,24 @@ from botocore.exceptions import ClientError
 
 
 def load_tfvars() -> dict:
-    """Load bootstrap.auto.tfvars.json for account IDs."""
+    """Load config from discovery.json and bootstrap.auto.tfvars.json."""
+    result = {}
+
     tfvars_path = Path("/work/terraform/bootstrap.auto.tfvars.json")
     if not tfvars_path.exists():
         tfvars_path = Path(__file__).parent.parent / "terraform" / "bootstrap.auto.tfvars.json"
+    if tfvars_path.exists():
+        with open(tfvars_path) as f:
+            result.update(json.load(f))
 
-    if not tfvars_path.exists():
-        return {}
+    discovery_path = Path("/work/terraform/discovery.json")
+    if not discovery_path.exists():
+        discovery_path = Path(__file__).parent.parent / "terraform" / "discovery.json"
+    if discovery_path.exists():
+        with open(discovery_path) as f:
+            result.update(json.load(f))
 
-    with open(tfvars_path) as f:
-        return json.load(f)
+    return result
 
 
 def assume_role(account_id: str, region: str) -> boto3.Session | None:
@@ -220,8 +228,13 @@ def check_automated_discovery(session: boto3.Session, region: str) -> dict:
 
 
 def check_classification_jobs(session: boto3.Session, region: str) -> dict:
-    """Check for the ccoe-weekly classification job."""
-    result = {"found": False, "job_id": None, "status": None, "job_type": None, "error": None}
+    """Check for an active ccoe-weekly classification job.
+
+    Searches for jobs with names starting with 'ccoe-weekly-' and returns
+    the first active (non-cancelled) match. The job name includes a config
+    hash suffix that changes when the job definition changes.
+    """
+    result = {"found": False, "job_name": None, "job_id": None, "status": None, "job_type": None, "error": None}
 
     if session is None:
         macie_client = boto3.client("macie2", region_name=region)
@@ -233,17 +246,25 @@ def check_classification_jobs(session: boto3.Session, region: str) -> dict:
             filterCriteria={
                 "includes": [
                     {
-                        "comparator": "EQ",
+                        "comparator": "STARTS_WITH",
                         "key": "name",
-                        "values": ["ccoe-weekly"],
+                        "values": ["ccoe-weekly-"],
                     }
-                ]
+                ],
+                "excludes": [
+                    {
+                        "comparator": "EQ",
+                        "key": "jobStatus",
+                        "values": ["CANCELLED"],
+                    }
+                ],
             }
         )
         items = response.get("items", [])
         if items:
             job = items[0]
             result["found"] = True
+            result["job_name"] = job.get("name")
             result["job_id"] = job.get("jobId")
             result["status"] = job.get("jobStatus")
             result["job_type"] = job.get("jobType")
@@ -415,10 +436,10 @@ def main():
         print(f"  ERROR: {job_result['error']}")
         issues.append("Classification job check failed")
     elif job_result["found"]:
-        print(f"  OK: Job found (ID: {job_result['job_id']})")
+        print(f"  OK: Job found ({job_result['job_name']}, ID: {job_result['job_id']})")
         print(f"      Status: {job_result['status']}, Type: {job_result['job_type']}")
     else:
-        print("  WARNING: ccoe-weekly job not found")
+        print("  WARNING: ccoe-weekly classification job not found")
         warnings.append("ccoe-weekly classification job not found")
     print("")
 

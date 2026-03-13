@@ -95,3 +95,15 @@ variable "common_tags" {
   type        = map(string)
   default     = {}
 }
+
+variable "bucket_exclusion_tag_key" {
+  description = "Tag key used to exclude this bucket from Macie classification jobs"
+  type        = string
+  default     = ""
+}
+
+variable "bucket_exclusion_tag_value" {
+  description = "Tag value for the Macie bucket exclusion tag"
+  type        = string
+  default     = "true"
+}

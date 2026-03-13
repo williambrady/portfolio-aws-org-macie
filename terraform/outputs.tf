@@ -21,7 +21,7 @@ output "findings_kms_key_arn" {
 }
 
 output "classification_job_id" {
-  description = "The ID of the ccoe-weekly classification job"
+  description = "The ID of the ccoe-weekly classification job (name includes config hash)"
   value       = local.accounts_exist ? module.macie_config[0].classification_job_id : ""
 }
 

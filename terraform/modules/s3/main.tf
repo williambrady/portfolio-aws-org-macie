@@ -20,9 +20,11 @@ resource "aws_s3_bucket" "main" {
   #checkov:skip=CKV_AWS_144:Cross-region replication is not required; findings are regional and reproducible
   bucket = var.bucket_name
 
-  tags = merge(var.common_tags, {
-    Name = var.bucket_name
-  })
+  tags = merge(
+    var.common_tags,
+    { Name = var.bucket_name },
+    var.bucket_exclusion_tag_key != "" ? { (var.bucket_exclusion_tag_key) = var.bucket_exclusion_tag_value } : {}
+  )
 }
 
 # -----------------------------------------------------------------------------

@@ -23,7 +23,7 @@ resource "aws_s3_bucket" "main" {
   tags = merge(
     var.common_tags,
     { Name = var.bucket_name },
-    var.bucket_exclusion_tag_key != "" ? { (var.bucket_exclusion_tag_key) = "true" } : {}
+    var.bucket_exclusion_tag_key != "" ? { (var.bucket_exclusion_tag_key) = var.bucket_exclusion_tag_value } : {}
   )
 }
 

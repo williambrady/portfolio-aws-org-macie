@@ -52,7 +52,7 @@ def assume_audit_role(
 
 def get_organization_accounts() -> list[dict]:
     """Get all active accounts in the organization."""
-    org_client = boto3.client("organizations")
+    org_client = boto3.client("organizations", region_name="us-east-1")
     accounts = []
 
     paginator = org_client.get_paginator("list_accounts")

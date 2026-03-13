@@ -101,3 +101,9 @@ variable "bucket_exclusion_tag_key" {
   type        = string
   default     = ""
 }
+
+variable "bucket_exclusion_tag_value" {
+  description = "Tag value for the Macie bucket exclusion tag"
+  type        = string
+  default     = "true"
+}

@@ -75,7 +75,7 @@ resource "aws_macie2_classification_export_configuration" "main" {
 # Scheduled job that runs every Saturday to classify sensitive data
 # across all S3 buckets in the organization.
 #
-# Buckets tagged with {prefix}_macie_exclude=true are excluded.
+# Buckets tagged with {prefix}_macie_exclude={tag_value} are excluded.
 # Infrastructure buckets (tfstate, access-logs, findings, etc.) should
 # be tagged by the projects that create them.
 #
